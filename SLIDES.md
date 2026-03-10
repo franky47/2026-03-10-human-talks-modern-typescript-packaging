@@ -85,9 +85,9 @@ layout: center
 {
   "exports": {
     ".": { // → import {…} from 'foo'
-      "types": "./dist/index.d.ts", // ← always first
+      "types": "./dist/index.d.ts",         // ← always first
       "browser": "./dist/index.browser.js", // ← other targets
-      "default": "./dist/index.js", // ← always last
+      "default": "./dist/index.js",         // ← always last
     },
     "./utils": { // → import {…} from 'foo/utils'
       "types": "./dist/utils.d.ts",
