@@ -489,12 +489,12 @@ Pre-built configs organized by transpiler × environment × project type:
 
 ### Notable new features from TS 5.5–6.0
 
-| Feature                                              | Version | Impact on libraries                                                                                 |
-| ---------------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------- |
-| `isolatedDeclarations`                               | TS 5.5  | Fast `.d.ts` generation without full type-checking; enables parallel declaration emit               |
-| `erasableSyntaxOnly`                                 | TS 5.8  | Only allows erasable syntax (see below); aligns with Node.js type stripping                        |
-| `#/` subpath imports                                 | TS 6.0  | Package-internal imports via `#/` prefix                                                            |
-| `module: "commonjs"` + `moduleResolution: "bundler"` | TS 6.0  | Previously disallowed combo, now permitted                                                          |
+| Feature                                              | Version | Impact on libraries                                                                   |
+| ---------------------------------------------------- | ------- | ------------------------------------------------------------------------------------- |
+| `isolatedDeclarations`                               | TS 5.5  | Fast `.d.ts` generation without full type-checking; enables parallel declaration emit |
+| `erasableSyntaxOnly`                                 | TS 5.8  | Only allows erasable syntax (see below); aligns with Node.js type stripping           |
+| `#/` subpath imports                                 | TS 6.0  | Package-internal imports via `#/` prefix                                              |
+| `module: "commonjs"` + `moduleResolution: "bundler"` | TS 6.0  | Previously disallowed combo, now permitted                                            |
 
 ### `erasableSyntaxOnly` (TS 5.8) — recommended for new projects
 
@@ -820,8 +820,8 @@ No build step. No tsconfig (inherits from root). The app's bundler handles every
 
 ### Build Tools
 
-- [tsdown](https://github.com/nicepkg/tsdown) (verify URL)
-- [tsup](https://tsup.egoist.dev)
+- [tsdown](https://tsdown.dev/) (based on oxc & rolldown)
+- [tsup](https://tsup.egoist.dev) (based on esbuild & rollup)
 - [unbuild](https://github.com/unjs/unbuild)
 - [pkgroll](https://github.com/privatenumber/pkgroll)
 - [Rolldown](https://rolldown.rs/)
