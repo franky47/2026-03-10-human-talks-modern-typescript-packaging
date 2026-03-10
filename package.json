@@ -1,0 +1,15 @@
+{
+  "name": "modern-typescript-packaging-talk",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "slidev",
+    "build": "slidev build",
+    "export": "slidev export"
+  },
+  "dependencies": {
+    "@slidev/cli": "^52.14.0",
+    "@slidev/theme-default": "latest",
+    "slidev-theme-geist": "^0.8.1"
+  }
+}
