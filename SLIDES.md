@@ -1,7 +1,7 @@
 ---
 theme: geist
 title: Modern TypeScript Packaging
-author: Franky
+author: François Best
 transition: none
 highlighter: shiki
 lineNumbers: false
@@ -20,7 +20,7 @@ fonts:
 Human Talks Grenoble — 2026-03-10
 
 <div class="author">
-  <img src="https://francoisbest.com/avatar.jpg" />
+  <img src="/avatar.jpg" />
   <div>
     <strong>François Best</strong>
     <span>@francoisbest.com</span>
@@ -28,14 +28,33 @@ Human Talks Grenoble — 2026-03-10
 </div>
 
 ---
+layout: center
+---
 
-## The Landscape Has Changed
+<div class="grid grid-cols-2 gap-8 w-full text-center">
+<div>
+
+# <span class="opacity-30">Application code</span>
+
+</div>
+<v-click>
+<div>
+
+# Library code
+
+</div>
+</v-click>
+</div>
+
+---
+
+## The Landscape in 2026
 
 <v-clicks>
 
 - **ESM-only** is the new default
 - TypeScript 6.0 Beta
-- New build tools: **tsdown** (**Rolldown**, **oxc**)
+- Fast build tools: **tsdown** (**oxc** + **Rolldown**), **tsgo**
 
 </v-clicks>
 
@@ -56,7 +75,7 @@ Human Talks Grenoble — 2026-03-10
 }
 ```
 
-> `require(esm)` — CJS consumers can still `require()` your ESM package
+`require(esm)` — CJS consumers can still `require()` your ESM package
 
 ---
 
@@ -65,12 +84,12 @@ Human Talks Grenoble — 2026-03-10
 ```jsonc {all|3-7|8-11|all}
 {
   "exports": {
-    ".": {
+    ".": { // → import {…} from 'foo'
       "types": "./dist/index.d.ts", // ← always first
       "browser": "./dist/index.browser.js", // ← other targets
       "default": "./dist/index.js", // ← always last
     },
-    "./utils": {
+    "./utils": { // → import {…} from 'foo/utils'
       "types": "./dist/utils.d.ts",
       "default": "./dist/utils.js",
     },
@@ -106,23 +125,29 @@ Shortcut: `@total-typescript/tsconfig`
 class: px-8
 ---
 
-## To Bundle or Not to Bundle?
+## Transpilation & Bundling
 
 <br/>
-<br/>
+
+<div className="font-medium">
 
 ```mermaid {theme: 'neutral'}
-%%{init: {'themeVariables': {'fontSize': '24px', 'fontFamily': 'Geist, sans-serif'}}}%%
+%%{init: {'themeVariables': {'fontSize': '24px', 'fontFamily': 'Geist, sans-serif' }}}%%
 graph LR
-  A["Who consumes? &nbsp;"] --> B["npm / public &nbsp;"]
-  A --> C["monorepo &nbsp;"]
-  C --> D["No build<br/>raw .ts source"]
-  B --> E["Transpile TS → JS&nbsp;<br/>Generate .d.ts"]
+  A["Who consumes? &nbsp;&nbsp;"] --> B["NPM / public &nbsp;"]
+  B --> E["<strong>Transpile</strong> TS → JS&nbsp;<br/>+ generate .d.ts"]
   E --> F["Bundle? &nbsp;"]
   E --> G["No bundle? &nbsp;"]
-  F --> H["tsdown<br/>(single file, tree-shake)"]
-  G --> I["tsc / tsgo<br/>(preserve file structure)"]
+  F --> H["<strong>tsdown</strong><br/>(single file, tree-shake)"]
+  G --> I["tsc / <strong>tsgo</strong><br/>(preserve file structure)"]
+  A ~~~ _s1[ ] ~~~ _s2[ ]
+  A --> C["monorepo / private"]
+  C --> D["<strong>No build</strong><br/>raw .ts source&nbsp;"]
+  style _s1 fill:none,stroke:none
+  style _s2 fill:none,stroke:none
 ```
+
+</div>
 
 ---
 
@@ -132,11 +157,11 @@ graph LR
 
 ### Blocked (needs runtime transform)
 
-| Construct          | Use instead         |
-| ------------------ | ------------------- |
-| `enum`             | `as const` object   |
-| `namespace`        | ES modules          |
-| `param properties` | explicit assignment |
+| Construct                   | Use instead         |
+| --------------------------- | ------------------- |
+| `enum`                      | `as const` object   |
+| `namespace`                 | ES modules          |
+| param properties in classes | explicit assignment |
 
 <v-click>
 
@@ -182,15 +207,17 @@ Node.js **strips types natively** — zero-transform TypeScript
 
 ## Build Tools — 2026
 
-| Tool       | Engine         | Bundle | .d.ts         |
-| ---------- | -------------- | ------ | ------------- |
-| **tsdown** | Rolldown + oxc | yes    | isolated decl |
-| tsup       | esbuild        | yes    | via tsc       |
-| tsc / tsgo | TS compiler    | no     | yes           |
+Criteria: transpilation + .d.ts emit, bundling, tree-shaking, type-checking
+
+<br/>
+
+| Tool           | Engine         | Bundle     | .d.ts           | Tree-shake   |
+| -------------- | -------------- | ---------- | --------------- | ------------ |
+| **tsdown**     | Rolldown + oxc | yes        | ⚡ isolated decl | yes          |
+| tsup           | esbuild        | yes        | via tsc         | yes          |
+| tsc / **tsgo** | JS / Golang    | no         | yes             | no           |
 
 <v-click>
-
-**tsdown** = the one to watch (VoidZero / Evan You)
 
 </v-click>
 
@@ -203,18 +230,28 @@ layout: two-cols
 ```
 packages/
   shared/
-    src/index.ts     ← raw .ts, no build
+    src/index.ts   // raw .ts, no build  →
     package.json
   app/
-    src/main.ts      ← imports @repo/shared
+    src/main.ts    // imports @repo/shared
     package.json
+```
+
+```jsonc
+// packages/app/package.json
+{
+  "name": "@repo/app",
+  "dependencies": {
+    "@repo/shared": "workspace:*",
+  },
+}
 ```
 
 ::right::
 
 ## Internal Packages
 
-<div class="">
+<div>
 
 ```jsonc
 // packages/shared/package.json
@@ -226,11 +263,13 @@ packages/
 }
 ```
 
-<v-click>
+<v-clicks>
 
-Only build **at the boundary**
+- Declare raw `.ts` files in exports map
+- Use local `workspace:*` resolution
+- Only build **for outside the monorepo**
 
-</v-click>
+</v-clicks>
 
 </div>
 
@@ -238,41 +277,35 @@ Only build **at the boundary**
 
 ## Before You Publish
 
+
+
 ```bash
 # Lint your package.json
-npx publint
+pnpx publint
 
 # Check TypeScript resolution for all consumers
-npx @arethetypeswrong/cli --pack
+pnpx @arethetypeswrong/cli --pack .
 ```
 
-<v-click>
+🌐 Online version:
 
-```
- ✅ node10     ✅ node16-esm     ✅ bundler
- ✅ node16-cjs ✅ node16-esm
-```
+- https://publint.dev
+- https://arethetypeswrong.github.io/
 
-</v-click>
 
 ---
 
-## TL;DR — 2026 Defaults
+## Recap — 2026 Defaults
 
-|          | npm library                       | monorepo pkg |
+|          | Public library                    | monorepo pkg |
 | -------- | --------------------------------- | ------------ |
-| Format   | ESM-only                          | raw `.ts`    |
+| Format   | ESM-only, emit `.js` + `.d.ts`    | raw `.ts`    |
 | Build    | **tsdown**                        | none         |
-| tsconfig | `NodeNext` + `erasableSyntaxOnly` | bundler mode |
+| tsconfig | `NodeNext` + `declaration`        | bundler mode |
 | Types    | `isolatedDeclarations`            | source       |
 | Validate | `publint` + `attw`                | —            |
 | Registry | **npm** (or JSR)                  | workspace    |
 
-<div class="mt-8 text-center opacity-75">
-
-publint.dev · arethetypeswrong.github.io · tsdown.dev
-
-</div>
 
 ---
 layout: center
