@@ -537,14 +537,17 @@ See: https://www.totaltypescript.com/erasable-syntax-only
 | **pkgroll**  | Rollup + esbuild | Moderate  | Zero-config | Yes           | Excellent    | package.json-as-config approach     |
 | **esbuild**  | Go               | Fastest   | Manual      | No (need tsc) | Good         | Custom pipelines, embedded engine   |
 | **swc**      | Rust             | Very fast | Manual      | No (need tsc) | N/A          | Embedded engine (Next.js, etc.)     |
+| **oxc**      | Rust             | Fastest   | Manual      | Yes (isolated decl) | N/A     | Embedded engine (Rolldown, Vite 8)  |
 
 ### The big stories
 
 **tsdown** (v0.21.1) — Spiritual successor to tsup, built on **Rolldown** (Rust-based Rollup replacement by VoidZero/Evan You, currently **v1 RC**). Better tree-shaking, scope hoisting, code splitting than esbuild. Rollup plugin compatible. Still pre-1.0 but rapidly maturing. Forward-looking default for new projects.
 
+**oxc** — The Rust compiler infrastructure powering Rolldown, Vite 8, and tsdown. Its **oxc-transform** package (v0.112.0, ~268k weekly npm downloads) handles TypeScript stripping, JSX transformation, and syntax lowering (to ES2015). Uniquely offers **isolated declarations** `.d.ts` emit — 40x faster than tsc. 3-5x faster than SWC with ~2 MB package size (vs SWC's 37 MB). Library authors interact with oxc indirectly through tsdown/Vite rather than directly. Pre-1.0 as standalone npm package, but production-proven through its integration in Rolldown/Vite 8. Limitations: no TC39 Stage 3 decorators, no ES5 target.
+
 **tsgo** (beta) — Native **Go port** of the TypeScript compiler by Microsoft's TS team (led by Anders Hejlsberg). Announced March 2025. **~10x performance improvement**. TypeScript 6.0 is the **last major version written in TypeScript** — TypeScript 7.0 will be the Go port. Biggest impact: `.d.ts` generation (the main bottleneck) becomes near-instant.
 
-**Isolated declarations** (TS 5.5) — Enables non-tsc tools to generate `.d.ts` without full type-checking. Requires explicit return type annotations on exported functions. **Significantly speeds up tsdown/tsup** for `.d.ts` bundling since the bundler can generate declarations without invoking the full type-checker. Combine with `isolatedDeclarations: true` in tsconfig.
+**Isolated declarations** (TS 5.5) — Enables non-tsc tools to generate `.d.ts` without full type-checking. Requires explicit return type annotations on exported functions. **Significantly speeds up tsdown/tsup** for `.d.ts` bundling since the bundler can generate declarations without invoking the full type-checker. Combine with `isolatedDeclarations: true` in tsconfig. oxc's implementation (`oxc_isolated_declarations`) is 40x faster than tsc for typical files — Vue-macros reported `.d.ts` generation dropping from 76s to 16s. tsdown uses oxc's isolated declarations when the flag is enabled, falling back to tsc otherwise.
 
 ### Decision framework
 
@@ -554,11 +557,12 @@ See: https://www.totaltypescript.com/erasable-syntax-only
 - **Already using Vite** → Vite library mode
 - **Zero config** → `pkgroll` or `unbuild`
 
-### Tools that are NOT build tools
+### Tools that are NOT build tools (but power them)
 
 - **Biome** — linting + formatting only (no transpilation/bundling)
-- **SWC** — embedded engine, rarely used standalone for library builds
-- **esbuild** — increasingly embedded (powers tsup, Vite dev), not standalone library tool
+- **oxc** — compiler infrastructure (parser, transformer, resolver, minifier) — powers Rolldown/Vite 8/tsdown; standalone npm package `oxc-transform` available but pre-1.0
+- **SWC** — embedded engine (powers Next.js/Turbopack), rarely used standalone for library builds
+- **esbuild** — increasingly embedded (powers tsup, legacy Vite dev), being replaced by oxc in Vite 8
 
 ---
 
@@ -818,7 +822,7 @@ No build step. No tsconfig (inherits from root). The app's bundler handles every
 - [Total TypeScript: How To Create An NPM Package](https://www.totaltypescript.com/how-to-create-an-npm-package)
 - [Total TypeScript: Relative Import Extensions](https://www.totaltypescript.com/relative-import-paths-need-explicit-file-extensions-in-ecmascript-imports)
 
-### Build Tools
+### Build Tools & Compiler Infrastructure
 
 - [tsdown](https://tsdown.dev/) (based on oxc & rolldown)
 - [tsup](https://tsup.egoist.dev) (based on esbuild & rollup)
@@ -827,6 +831,9 @@ No build step. No tsconfig (inherits from root). The app's bundler handles every
 - [Rolldown](https://rolldown.rs/)
 - [esbuild](https://esbuild.github.io/)
 - [SWC](https://swc.rs/)
+- [oxc](https://oxc.rs/) (Rust compiler infrastructure — parser, transformer, isolated declarations)
+- [oxc-transform on npm](https://www.npmjs.com/package/oxc-transform)
+- [VoidZero](https://voidzero.dev/) (company behind Vite, Rolldown, oxc)
 
 ### Registries & Ecosystem
 
@@ -848,7 +855,7 @@ No build step. No tsconfig (inherits from root). The app's bundler handles every
 - [x] **tsgo**: Still in beta. TS 6.0 is last TS-written major; TS 7.0 = Go port.
 - [x] **tsdown**: v0.21.1 (pre-1.0). Actively developed.
 - [x] **Rolldown**: v1 RC.
-- [x] **Isolated declarations**: Yes, significantly speeds up tsdown `.d.ts` bundling.
+- [x] **Isolated declarations**: Yes, significantly speeds up tsdown `.d.ts` bundling. oxc's implementation is 40x faster than tsc.
 - [x] **`@total-typescript/tsconfig`**: v1.0.4 not yet updated for TS 6.0, but defaults already align. No TS 6.0 blog post yet.
 - [x] **`erasableSyntaxOnly`**: Yes, mainstream recommendation. Recommended by Node.js docs, tsconfig/bases, Matt Pocock, Rob Palmer. See expanded section in doc.
 - [x] **Node.js `module-sync` condition**: Researched (see `research/module-sync-condition.md`), too advanced for this talk
