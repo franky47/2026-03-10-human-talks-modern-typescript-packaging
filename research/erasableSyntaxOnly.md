@@ -222,7 +222,7 @@ Sources:
 
 ### How Node.js Type Stripping Works
 
-Node.js uses [amaro](https://github.com/nicolo-ribaudo/amaro) (which wraps SWC) to replace TypeScript syntax with whitespace. This is a fundamentally simple operation:
+Node.js uses [amaro](https://github.com/nodejs/amaro) (which wraps SWC) to replace TypeScript syntax with whitespace. This is a fundamentally simple operation:
 
 1. Parse the source file
 2. Identify TypeScript-specific tokens (type annotations, interfaces, etc.)
