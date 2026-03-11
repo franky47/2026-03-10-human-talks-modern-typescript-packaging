@@ -2,6 +2,10 @@
 
 Human Talks Grenoble — 2026-03-10
 
+## Recording
+
+[![YouTube](https://img.shields.io/badge/YouTube-Watch-red?logo=youtube)](https://youtu.be/h5TKlpRZPzI)
+
 ## Slides
 
 ```bash
